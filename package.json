@@ -1,0 +1,36 @@
+{
+  "name": "css-ease-presets",
+  "version": "0.1.0",
+  "description": "CSS animation preset library: cubic-bezier variables, utility classes, and JSON/JS exports.",
+  "license": "MIT",
+  "author": "Wilson Anibe",
+  "keywords": [
+    "css",
+    "animation",
+    "easing",
+    "cubic-bezier",
+    "timing-function",
+    "presets"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "default": "./dist/index.mjs"
+    },
+    "./eases.json": "./dist/eases.json",
+    "./ease-vars.css": "./dist/ease-vars.css",
+    "./ease-classes.css": "./dist/ease-classes.css",
+    "./animations.css": "./dist/animations.css"
+  },
+  "files": [
+    "dist/*"
+  ],
+  "scripts": {
+    "build": "node ./src/build.js",
+    "prepublishOnly": "npm run build"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}

@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CSS Ease Presets – Demo</title>
+  <link rel="stylesheet" href="./dist/ease-vars.css">
+  <link rel="stylesheet" href="./dist/ease-classes.css">
+  <link rel="stylesheet" href="./dist/animations.css">
+  <style>
+    :root{ --bg:#0b0f14; --fg:#e7eef7; --muted:#a6b2c6; --card:#121926; --chip:#1b2433; --accent:#5eead4; }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Ubuntu;color:var(--fg);background:linear-gradient(180deg,#0b0f14, #0e1420)}
+    header{padding:24px 16px;max-width:1060px;margin:0 auto}
+    h1{margin:0;font-size:28px;letter-spacing:.2px}
+    p.lead{color:var(--muted);margin:6px 0 0 0}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+    .toolbar button{background:var(--chip);color:var(--fg);border:1px solid #253048;border-radius:10px;padding:8px 12px;cursor:pointer}
+    .toolbar button.active{outline:2px solid var(--accent)}
+    main{max-width:1060px;margin:8px auto 64px;padding:0 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+    .card{background:var(--card);border:1px solid #1d2736;border-radius:16px;padding:14px;box-shadow:0 1px 0 rgba(255,255,255,.05) inset}
+    .row{display:flex;align-items:center;gap:10px;margin:10px 0}
+    .dot{width:16px;height:16px;border-radius:50%;background:var(--accent);}
+    .track{flex:1;height:4px;background:#202a3b;border-radius:999px;position:relative;overflow:hidden}
+    .thumb{width:16px;height:16px;background:var(--fg);border-radius:50%;position:absolute;top:50%;transform:translate(-50%,-50%); box-shadow:0 0 0 3px rgba(255,255,255,.06)}
+    .name{font-weight:600}
+    .meta{color:var(--muted);font-size:12px}
+    .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .btn{font-size:12px;padding:6px 8px;border-radius:8px;border:1px solid #253048;background:#151e2c;color:var(--fg);cursor:pointer}
+    .btn.copy{background:#101826}
+    .pill{font-family:ui-monospace,Consolas,monospace;background:#0e1624;padding:2px 6px;border-radius:999px;border:1px solid #243149;color:#a9b8d0}
+    .kf{font-size:12px;margin-top:6px}
+    footer{max-width:1060px;margin:32px auto;color:#7e8aa7;padding:0 16px}
+    a{color:#9ae6b4}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>CSS Ease Presets – Demo</h1>
+    <p class="lead">Preview easing curves as transitions (hover) or animations (auto-play). Copy variables and cubic-bezier strings.</p>
+    <div class="toolbar">
+      <button id="mode-transition" class="active">Mode: Transition (hover)</button>
+      <button id="mode-animation">Mode: Animation (auto)</button>
+      <button id="play-all">Play all</button>
+    </div>
+  </header>
+  <main id="grid"></main>
+  <footer>
+    <p>Presets are cubic-bezier approximations of classic easing families plus material-like curves. For true bounce/elastic, use the provided keyframes.</p>
+  </footer>
+
+  <script type="module">
+    const eases = await (await fetch('./dist/eases.json')).json();
+    const grid = document.getElementById('grid');
+    const asBezier = pts => `cubic-bezier(${pts.join(',')})`;
+
+    let mode = 'transition'; // 'transition' | 'animation'
+
+    function card(name, pts){
+      const card = document.createElement('div');
+      card.className = 'card transition-ease-quart-out';
+
+      const bez = asBezier(pts);
+      const id = `ease-${name}`;
+
+      card.innerHTML = `
+        <div class="name">${name}</div>
+        <div class="meta"><span class="pill">var(--ease-${name})</span> <span class="pill">${bez}</span></div>
+        <div class="row">
+          <div class="dot"></div>
+          <div class="track"><div class="thumb" id="${id}-thumb" style="left: 10%;"></div></div>
+        </div>
+        <div class="btns">
+          <button class="btn copy" data-copy="var(--ease-${name})">Copy CSS var</button>
+          <button class="btn copy" data-copy="${bez}">Copy cubic-bezier</button>
+          <button class="btn" data-preview="anim">Animate</button>
+        </div>
+        <div class="kf">
+          <code>.ease-${name} { animation-timing-function: var(--ease-${name}); }</code>
+        </div>
+      `;
+
+      const thumb = card.querySelector(`#${id}-thumb`);
+      const track = card.querySelector('.track');
+
+      function play(){
+        if(mode === 'transition'){
+          thumb.style.transition = `left 900ms ${bez}`;
+          thumb.style.left = '90%';
+          setTimeout(()=>{
+            thumb.style.transition = `left 900ms ${bez}`;
+            thumb.style.left = '10%';
+          }, 1000);
+        } else {
+          // Animation mode: use keyframes with easing variable as timing-function
+          thumb.animate(
+            [{ transform: 'translate(-50%,-50%)', left: '10%' }, { left: '90%' }, { left: '10%'}],
+            { duration: 1800, iterations: 1, easing: bez, fill: 'both' }
+          );
+        }
+      }
+
+      card.querySelector('[data-preview="anim"]').addEventListener('click', play);
+      track.addEventListener('mouseenter', () => { if(mode==='transition') play(); });
+
+      card.querySelectorAll('.copy').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const val = e.currentTarget.getAttribute('data-copy');
+          try{
+            await navigator.clipboard.writeText(val);
+            e.currentTarget.textContent = 'Copied!';
+            setTimeout(()=> e.currentTarget.textContent = e.currentTarget.getAttribute('data-copy').startsWith('var') ? 'Copy CSS var' : 'Copy cubic-bezier', 1000);
+          }catch{}
+        });
+      });
+
+      return card;
+    }
+
+    Object.entries(eases).forEach(([name, pts]) => grid.appendChild(card(name, pts)));
+
+    document.getElementById('mode-transition').addEventListener('click', (e)=>{
+      mode = 'transition';
+      e.currentTarget.classList.add('active');
+      document.getElementById('mode-animation').classList.remove('active');
+    });
+    document.getElementById('mode-animation').addEventListener('click', (e)=>{
+      mode = 'animation';
+      e.currentTarget.classList.add('active');
+      document.getElementById('mode-transition').classList.remove('active');
+    });
+    document.getElementById('play-all').addEventListener('click', ()=>{
+      document.querySelectorAll('[data-preview="anim"]').forEach(btn => btn.click());
+    });
+  </script>
+</body>
+</html>
